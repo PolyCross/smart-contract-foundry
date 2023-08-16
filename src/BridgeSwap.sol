@@ -90,23 +90,21 @@ contract BridgeSwap is IBridgeSwap, ERC1155Supply, Ownable {
         IERC20(tokenA).transferFrom(msg.sender, address(this), amountA);
         IERC20(tokenB).transferFrom(msg.sender, address(this), amountB);
 
-        if (tokenA < tokenB) {
-            Pool memory newPool = Pool({
+        Pool memory newPool = tokenA < tokenB
+            ? Pool({
                 token0: tokenA,
                 token1: tokenB,
                 reserve0: amountA,
                 reserve1: amountB
-            });
-            poolList.push(newPool);
-        } else {
-            Pool memory newPool = Pool({
+            })
+            : Pool({
                 token0: tokenB,
                 token1: tokenA,
                 reserve0: amountB,
                 reserve1: amountA
             });
-            poolList.push(newPool);
-        }
+
+        poolList.push(newPool);
 
         isPoolExists[tokenA][tokenB] = true;
         isPoolExists[tokenB][tokenA] = true;
