@@ -4,7 +4,6 @@ pragma solidity ^0.8.16;
 import "forge-std/Test.sol";
 import "../src/Bridge.sol";
 import "../src/TestToken.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract BridgeTest is Test {
     event BridgeIn(
