@@ -68,7 +68,7 @@ contract BridgeSwapTest is Test, IERC1155Receiver {
         );
     }
 
-    function test_SwapIn() public {
+    function test_SwapOut() public {
         uint256 share = bridgeSwap.addLiquidity(
             address(tokenA),
             address(tokenB),
@@ -81,17 +81,15 @@ contract BridgeSwapTest is Test, IERC1155Receiver {
         path[0] = address(tokenA);
         path[1] = address(tokenB);
 
-        bridgeSwap.swapIn(1e21, 0, path);
+        uint256 balanceOfToeknB_BeforeSwap = tokenB.balanceOf(address(this));
 
-        (
-            address token0,
-            address token1,
-            uint256 reserve0,
-            uint256 reserve1
-        ) = bridgeSwap.getPoolInfo(address(tokenA), address(tokenB));
+        uint256 amountOut = bridgeSwap.calculateAmountOut(1e21, path);
 
-        console.log(reserve0);
-        console.log(reserve1);
+        bridgeSwap.swapOut(1e21, path, address(this));
+
+        uint256 balanceOfToeknB_AfterSwap = tokenB.balanceOf(address(this));
+
+        assertEq(balanceOfToeknB_AfterSwap, balanceOfToeknB_BeforeSwap + amountOut);
     }
 
     // =============================================== ERC1155 Receiver ===============================================
