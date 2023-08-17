@@ -16,6 +16,7 @@ contract BridgeSwapTest is Test, IERC1155Receiver {
         tokenA = new ERC20("TokenA", "TA");
         tokenB = new ERC20("TokenB", "TB");
         bridgeSwap = new BridgeSwap();
+        bridgeSwap.Initialize();
 
         deal(address(tokenA), address(this), 1e26);
         deal(address(tokenB), address(this), 1e26);
