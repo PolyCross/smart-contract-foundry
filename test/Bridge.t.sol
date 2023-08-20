@@ -33,6 +33,9 @@ contract BridgeTest is Test {
         assertEq(bridge.isSupported(address(tt)), false);
         bridge.supportNewToken(address(tt));
         assertEq(bridge.isSupported(address(tt)), true);
+
+        vm.expectRevert();
+        bridge.supportNewToken(address(tt));
     }
 
     function testAddReserve() public {
