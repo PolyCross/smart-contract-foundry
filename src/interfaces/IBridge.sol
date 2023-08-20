@@ -4,7 +4,11 @@ pragma solidity ^0.8.16;
 interface IBridge {
     error TokenNotSupport();
 
-    function bridgeIn(address token, uint256 amount, address operator) external;
+    function reserve(address token) external returns (uint256);
+
+    function isSupported(address token) external returns (bool);
+
+    function bridgeIn(address token, uint256 amount) external;
 
     function bridgeOut(address token, uint256 amount, address to) external;
 
@@ -13,7 +17,7 @@ interface IBridge {
     function addReserve(address token, uint256 amount) external;
 
     event BridgeIn(
-        address indexed operator,
+        address indexed receiver,
         address indexed token,
         uint256 amount
     );

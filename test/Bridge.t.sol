@@ -49,7 +49,7 @@ contract BridgeTest is Test {
         vm.expectEmit();
         emit BridgeIn(address(this), address(tt), 10 ether);
 
-        bridge.bridgeIn(address(tt), 10 ether, address(this));
+        bridge.bridgeIn(address(tt), 10 ether);
         assertEq(bridge.reserve(address(tt)), 90 ether);
     }
 
