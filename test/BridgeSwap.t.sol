@@ -6,7 +6,6 @@ import "../src/BridgeSwap.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 
-
 contract BridgeSwapTest is Test, IERC1155Receiver {
     event BridgeSwapIn(
         address[] path,
@@ -32,18 +31,16 @@ contract BridgeSwapTest is Test, IERC1155Receiver {
         tokenB.approve(address(bridgeSwap), 1e26);
     }
 
-    function testFail_initialize() public {
+    function test_initialize() public {
+        vm.expectRevert();
         bridgeSwap.Initialize();
     }
 
     function test_getPoolInfo() public {
-        vm.expectRevert();
-        bridgeSwap.getPoolInfo(address(tokenA), address(tokenB));
-
         (ERC20 token0, ERC20 token1) = tokenA < tokenB
             ? (tokenA, tokenB)
             : (tokenB, tokenA);
-        bridgeSwap.initPool(
+        bridgeSwap.addLiquidity(
             address(token0),
             address(token1),
             1e22,
@@ -64,44 +61,9 @@ contract BridgeSwapTest is Test, IERC1155Receiver {
         assertEq(reserve1, 1e24);
     }
 
-    function test_initPool() public {
-        assertFalse(bridgeSwap.isPoolExists(address(tokenA), address(tokenB)));
-        assertEq(bridgeSwap.poolTotalAmount(), 0);
-
-        vm.expectRevert();
-        bridgeSwap.initPool(
-            address(tokenA),
-            address(tokenA),
-            1e22,
-            1e22,
-            address(this)
-        );
-
-        uint256 share = bridgeSwap.initPool(
-            address(tokenA),
-            address(tokenB),
-            1e22,
-            1e22,
-            address(this)
-        );
-        uint256 balanceA = tokenA.balanceOf(address(this));
-        uint256 balanceB = tokenA.balanceOf(address(this));
-
-        assertTrue(bridgeSwap.isPoolExists(address(tokenA), address(tokenB)));
-        assertEq(bridgeSwap.poolTotalAmount(), 1);
-
-        assertEq(balanceA, 1e26 - 1e22);
-        assertEq(balanceB, 1e26 - 1e22);
-        assertEq(share, 1e22);
-
-        vm.expectRevert();
-        bridgeSwap.initPool(
-            address(tokenA),
-            address(tokenB),
-            1e22,
-            1e22,
-            address(this)
-        );
+    function test_getPoolInfoWithPoolNotExist() public {
+        vm.expectRevert("Pool doesn't exist");
+        bridgeSwap.getPoolInfo(address(tokenA), address(tokenB));
     }
 
     function test_addLiquidity() public {
@@ -123,6 +85,40 @@ contract BridgeSwapTest is Test, IERC1155Receiver {
         );
 
         assertEq(share, 1e22);
+
+        bridgeSwap.addLiquidity(
+            address(tokenA),
+            address(tokenB),
+            1e23,
+            1e23,
+            address(this)
+        );
+
+        assertEq(tokenA.balanceOf(address(this)), 1e26 - 1e22 - 1e23);
+        assertEq(tokenB.balanceOf(address(this)), 1e26 - 1e22 - 1e23);
+    }
+
+    function test_calculateAmountOut() public {
+        bridgeSwap.addLiquidity(
+            address(tokenA),
+            address(tokenB),
+            1e22,
+            1e22,
+            address(this)
+        );
+
+        address[] memory path_1 = new address[](1);
+        path_1[0] = address(tokenA);
+
+        vm.expectRevert();
+        bridgeSwap.calculateAmountOut(1, path_1);
+
+        address[] memory path_2 = new address[](2);
+        path_2[0] = address(tokenA);
+        path_2[1] = address(new ERC20("Token Test", "TT"));
+
+        vm.expectRevert();
+        bridgeSwap.calculateAmountOut(1, path_2);
     }
 
     function test_swapIn() public {
@@ -174,18 +170,43 @@ contract BridgeSwapTest is Test, IERC1155Receiver {
         );
     }
 
-    // TODO
     function test_removeLiquidity() public {
-        uint256 shares = bridgeSwap.addLiquidity(address(tokenA), address(tokenB), 1e24, 1e24, address(this));
-        
-        bridgeSwap.removeLiquidity(address(tokenA), address(tokenB), shares, address(this));
+        uint256 shares = bridgeSwap.addLiquidity(
+            address(tokenA),
+            address(tokenB),
+            1e24,
+            1e24,
+            address(this)
+        );
+
+        bridgeSwap.removeLiquidity(
+            address(tokenA),
+            address(tokenB),
+            shares,
+            address(this)
+        );
 
         assertEq(tokenA.balanceOf(address(this)), 1e26);
         assertEq(tokenB.balanceOf(address(this)), 1e26);
 
-        (address token0, address token1, uint256 reserve0, uint256 reserve1) = bridgeSwap.getPoolInfo(address(tokenA), address(tokenB));
+        (
+            address token0,
+            address token1,
+            uint256 reserve0,
+            uint256 reserve1
+        ) = bridgeSwap.getPoolInfo(address(tokenA), address(tokenB));
         assertEq(reserve0, 0);
         assertEq(reserve1, 0);
+    }
+
+    function test_removeLiquidtyWithPoolNotExist() public {
+        vm.expectRevert();
+        bridgeSwap.removeLiquidity(
+            address(tokenA),
+            address(tokenB),
+            1,
+            address(this)
+        );
     }
 
     // =============================================== ERC1155 Receiver ===============================================
