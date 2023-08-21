@@ -61,7 +61,7 @@ contract BridgeSwap is
             uint256 reserve1
         )
     {
-        if (!isPoolExists[tokenA][tokenB]) revert("Pool doesn't exist");
+        if (!isPoolExists[tokenA][tokenB]) revert PoolNotExist();
         uint256 index = poolIndex[tokenA][tokenB];
         Pool memory targetPool = poolList[index];
         (token0, token1, reserve0, reserve1) = (
