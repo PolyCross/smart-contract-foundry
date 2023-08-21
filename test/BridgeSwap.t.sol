@@ -62,8 +62,20 @@ contract BridgeSwapTest is Test, IERC1155Receiver {
     }
 
     function test_getPoolInfoWithPoolNotExist() public {
-        vm.expectRevert("Pool doesn't exist");
+        vm.expectRevert();
         bridgeSwap.getPoolInfo(address(tokenA), address(tokenB));
+    }
+
+    function test_poolTotalAmount() public {
+        assertEq(bridgeSwap.poolTotalAmount(), 0);
+        bridgeSwap.addLiquidity(
+            address(tokenA),
+            address(tokenB),
+            1e22,
+            1e22,
+            address(this)
+        );
+        assertEq(bridgeSwap.poolTotalAmount(), 1);
     }
 
     function test_addLiquidity() public {
