@@ -119,18 +119,38 @@ contract BridgeSwapTest is Test, IERC1155Receiver {
             address(this)
         );
 
-        address[] memory path_1 = new address[](1);
-        path_1[0] = address(tokenA);
+        address[] memory path = new address[](2);
+        path[0] = address(tokenA);
+        path[1] = address(tokenB);
+
+        uint256 amountOut = bridgeSwap.calculateAmountOut(1e19, path);
+        uint256[] memory amounts = bridgeSwap.swapIn(1e19, 0, path);
+        assertEq(amountOut, amounts[1]);
+    }
+
+    function test_calculateAmountOutWithInvalidPath() public {
+        bridgeSwap.addLiquidity(
+            address(tokenA),
+            address(tokenB),
+            1e22,
+            1e22,
+            address(this)
+        );
+
+        address[] memory path = new address[](1);
+        path[0] = address(tokenA);
 
         vm.expectRevert();
-        bridgeSwap.calculateAmountOut(1, path_1);
+        bridgeSwap.calculateAmountOut(1, path);
+    }
 
-        address[] memory path_2 = new address[](2);
-        path_2[0] = address(tokenA);
-        path_2[1] = address(new ERC20("Token Test", "TT"));
+    function test_calculateAmountOutWithPoolNotExist() public {
+        address[] memory path = new address[](2);
+        path[0] = address(tokenA);
+        path[1] = address(new ERC20("Token Test", "TT"));
 
         vm.expectRevert();
-        bridgeSwap.calculateAmountOut(1, path_2);
+        bridgeSwap.calculateAmountOut(1, path);
     }
 
     function test_swapIn() public {
