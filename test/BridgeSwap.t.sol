@@ -13,6 +13,22 @@ contract BridgeSwapTest is Test, IERC1155Receiver {
         address indexed receiver
     );
 
+    event AddLiquidty(
+        address account,
+        address token0,
+        address token1,
+        uint256 share,
+        address to
+    );
+
+    event RemoveLiquidity(
+        address account,
+        address tokenA,
+        address tokenB,
+        uint256 liquidity,
+        address to
+    );
+
     ERC20 tokenA;
     ERC20 tokenB;
 
@@ -79,15 +95,6 @@ contract BridgeSwapTest is Test, IERC1155Receiver {
     }
 
     function test_addLiquidity() public {
-        vm.expectRevert();
-        bridgeSwap.addLiquidity(
-            address(tokenA),
-            address(tokenA),
-            1e22,
-            1e22,
-            address(this)
-        );
-
         uint256 share = bridgeSwap.addLiquidity(
             address(tokenA),
             address(tokenB),
@@ -108,6 +115,40 @@ contract BridgeSwapTest is Test, IERC1155Receiver {
 
         assertEq(tokenA.balanceOf(address(this)), 1e26 - 1e22 - 1e23);
         assertEq(tokenB.balanceOf(address(this)), 1e26 - 1e22 - 1e23);
+    }
+
+    function test_addLiquidityWithPoolExists() public {
+        bridgeSwap.addLiquidity(
+            address(tokenA),
+            address(tokenB),
+            1e22,
+            1e22,
+            address(this)
+        );
+
+        vm.expectEmit();
+        emit AddLiquidty(address(this), address(tokenB), address(tokenA), 1e22, address(this));
+
+        uint256 share = bridgeSwap.addLiquidity(
+            address(tokenA),
+            address(tokenB),
+            1e22,
+            1e22,
+            address(this)
+        );
+
+        assertEq(share, 1e22);
+    }
+
+    function test_addLiquidityWithSameToken() public {
+        vm.expectRevert();
+        bridgeSwap.addLiquidity(
+            address(tokenA),
+            address(tokenA),
+            1e22,
+            1e22,
+            address(this)
+        );
     }
 
     function test_calculateAmountOut() public {
@@ -170,6 +211,20 @@ contract BridgeSwapTest is Test, IERC1155Receiver {
         emit BridgeSwapIn(path, 1e21, address(this));
 
         bridgeSwap.swapIn(1e21, 0, path);
+    }
+
+    function test_swapInWithInvalidSlippage() public {
+        bridgeSwap.addLiquidity(
+            address(tokenA),
+            address(tokenB),
+            1e24,
+            1e24,
+            address(this)
+        );
+
+        address[] memory path = new address[](2);
+        path[0] = address(tokenA);
+        path[1] = address(tokenB);
 
         vm.expectRevert();
         bridgeSwap.swapIn(1e21, 1e24, path);
@@ -202,6 +257,58 @@ contract BridgeSwapTest is Test, IERC1155Receiver {
         );
     }
 
+    function test_swapInWithInvalidPath() public {
+        bridgeSwap.addLiquidity(
+            address(tokenA),
+            address(tokenB),
+            1e24,
+            1e24,
+            address(this)
+        );
+
+        address[] memory path = new address[](1);
+        path[0] = address(tokenA);
+
+        vm.expectRevert();
+        bridgeSwap.swapIn(1e21, 0, path);
+    }
+
+    function test_swapInWithPoolNotExist() public {
+        bridgeSwap.addLiquidity(
+            address(tokenA),
+            address(tokenB),
+            1e24,
+            1e24,
+            address(this)
+        );
+
+        address[] memory path = new address[](2);
+        path[0] = address(tokenA);
+        path[1] = address(tokenA);
+
+        vm.expectRevert();
+        bridgeSwap.swapIn(1e21, 1e24, path);
+    }
+
+    function test_swapInWithReverseToken() public {
+        bridgeSwap.addLiquidity(
+            address(tokenA),
+            address(tokenB),
+            1e24,
+            1e24,
+            address(this)
+        );
+
+        address[] memory path = new address[](2);
+        path[0] = address(tokenB);
+        path[1] = address(tokenA);
+
+        vm.expectEmit();
+        emit BridgeSwapIn(path, 1e21, address(this));
+
+        bridgeSwap.swapIn(1e21, 0, path);
+    }
+
     function test_removeLiquidity() public {
         uint256 shares = bridgeSwap.addLiquidity(
             address(tokenA),
@@ -210,6 +317,9 @@ contract BridgeSwapTest is Test, IERC1155Receiver {
             1e24,
             address(this)
         );
+
+        vm.expectEmit();
+        emit RemoveLiquidity(address(this), address(tokenA), address(tokenB), shares, address(this));
 
         bridgeSwap.removeLiquidity(
             address(tokenA),
