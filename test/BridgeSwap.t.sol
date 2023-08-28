@@ -127,7 +127,13 @@ contract BridgeSwapTest is Test, IERC1155Receiver {
         );
 
         vm.expectEmit();
-        emit AddLiquidty(address(this), address(tokenB), address(tokenA), 1e22, address(this));
+        emit AddLiquidty(
+            address(this),
+            address(tokenB),
+            address(tokenA),
+            1e22,
+            address(this)
+        );
 
         uint256 share = bridgeSwap.addLiquidity(
             address(tokenA),
@@ -319,7 +325,13 @@ contract BridgeSwapTest is Test, IERC1155Receiver {
         );
 
         vm.expectEmit();
-        emit RemoveLiquidity(address(this), address(tokenA), address(tokenB), shares, address(this));
+        emit RemoveLiquidity(
+            address(this),
+            address(tokenA),
+            address(tokenB),
+            shares,
+            address(this)
+        );
 
         bridgeSwap.removeLiquidity(
             address(tokenA),
@@ -331,12 +343,10 @@ contract BridgeSwapTest is Test, IERC1155Receiver {
         assertEq(tokenA.balanceOf(address(this)), 1e26);
         assertEq(tokenB.balanceOf(address(this)), 1e26);
 
-        (
-            address token0,
-            address token1,
-            uint256 reserve0,
-            uint256 reserve1
-        ) = bridgeSwap.getPoolInfo(address(tokenA), address(tokenB));
+        (, , uint256 reserve0, uint256 reserve1) = bridgeSwap.getPoolInfo(
+            address(tokenA),
+            address(tokenB)
+        );
         assertEq(reserve0, 0);
         assertEq(reserve1, 0);
     }
@@ -354,12 +364,12 @@ contract BridgeSwapTest is Test, IERC1155Receiver {
     // =============================================== ERC1155 Receiver ===============================================
 
     function onERC1155Received(
-        address operator,
-        address from,
-        uint256 id,
-        uint256 value,
-        bytes calldata data
-    ) external override returns (bytes4) {
+        address /* operator */,
+        address /* from */,
+        uint256 /* id */,
+        uint256 /* value */,
+        bytes calldata /* data */
+    ) external pure override returns (bytes4) {
         return
             bytes4(
                 keccak256(
@@ -369,12 +379,12 @@ contract BridgeSwapTest is Test, IERC1155Receiver {
     }
 
     function onERC1155BatchReceived(
-        address operator,
-        address from,
-        uint256[] calldata ids,
-        uint256[] calldata values,
-        bytes calldata data
-    ) external override returns (bytes4) {
+        address /* operator */,
+        address /* from */,
+        uint256[] calldata /* ids */,
+        uint256[] calldata /* values */,
+        bytes calldata /* data */
+    ) external pure override returns (bytes4) {
         return
             bytes4(
                 keccak256(
