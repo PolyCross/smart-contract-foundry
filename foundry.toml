@@ -4,3 +4,10 @@ out = "out"
 libs = ["lib"]
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
+[etherscan]
+sepolia = { key = "${Etherscan_API_Key}" }
+mumbai = { key = "${Polygonscan_API_Key}" }
+
+[rpc_endpoints]
+sepolia = "https://eth-sepolia.g.alchemy.com/v2/${Spolia_RPC_Key}"
+mumbai = "https://polygon-mumbai.g.alchemy.com/v2/${Mumbai_RPC_Key}"
